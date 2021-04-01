@@ -1,1 +1,1 @@
-# RGB-Control-ESP32
+# RGB Control ESP32
