@@ -1,0 +1,16 @@
+{
+    "cSpell.ignoreWords": [
+        "bixo",
+        "i",
+        "inputelement",
+        "irrecv",
+        "ledc",
+        "oninput",
+        "progmem",
+        "rrecv",
+        "setup"
+    ],
+    "files.associations": {
+        "functional": "cpp"
+    }
+}

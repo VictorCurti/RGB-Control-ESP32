@@ -1,0 +1,59 @@
+<!DOCTYPE HTML>
+
+<html dir="ltr" lang="pt" class="focus-outline-visible">
+
+<head>
+    <title>RGB Control</title>
+</head>
+
+<body style="background-color: rgb(30, 30, 30);">
+    <p>
+        <font color=#E2E2E2 face="Verdana, Geneva, sans-serif" size="+1">
+            <h1>RGB Control</h1>
+            <h2>Color select: </h2>
+            <table>
+                <tr>
+                    <td>
+                        Power :
+                    </td>
+                    <td>
+                        <form action="/get">
+                            <input type="submit" name="power" value="ON" />
+                        </form>
+                    </td>
+                    <td>
+                        <form action="/get">
+                            <input type="submit" name="power" value="OFF" />
+                        </form>
+                    </td>
+                </tr>
+                <tr>
+                    <form action="/get">
+                        Color :
+                        <input type="color" id="send" oninput="result.value = send.value">
+                        <input type="text" id="result" name="color">
+                        <input type="submit" value="Send color" />
+                    </form>
+                </tr>
+                <tr>
+                    <td>
+                        Modo :
+                    </td>
+                    <td>
+                        <form action="/get">
+                            <input type="submit" name="mode" value="Fade" />
+                        </form>
+                    </td>
+                    <td>
+                        <form action="/get">
+                            <input type="submit" name="mode" value="Strobe" />
+                        </form>
+                    </td>
+                </tr>
+            </table>
+            <h6>By: Victor Curti</h6>
+        </font>
+    </p>
+</body>
+
+</html>
