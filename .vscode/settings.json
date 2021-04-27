@@ -10,5 +10,6 @@
         "pm",
         "prk",
         "y"
-    ]
+    ],
+    "C_Cpp.errorSquiggles": "Disabled"
 }

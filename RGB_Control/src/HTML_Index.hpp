@@ -1,5 +1,7 @@
 #include <ESPAsyncWebServer.h>
 
+void notFound(AsyncWebServerRequest *request);
+
 // HTML web page to handle 3 input fields (input1, input2, input3)
 const char index_html[] PROGMEM = R"rawliteral(
 <!DOCTYPE HTML>
@@ -119,7 +121,8 @@ const char index_html[] PROGMEM = R"rawliteral(
     
 )rawliteral";
 
-void InitializeServer(){
+void InitializeServer()
+{
     // Send web page with input fields to client
     server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
         request->send_P(200, "text/html", index_html);
@@ -131,14 +134,14 @@ void InitializeServer(){
             (request->getParam(PARAM_INPUT_1)->value()) == "" ? Color = "000000" : Color = request->getParam(PARAM_INPUT_1)->value();
             Mode = "Color";
             Power = "ON";
-            Blynk.virtualWrite(V5, 1);//set power on
-            Blynk.virtualWrite(V0, 1);//Set modo as color
+            Blynk.virtualWrite(V5, 1); //set power on
+            Blynk.virtualWrite(V0, 1); //Set modo as color
             Hex2RGB(Color);
         }
         else if (request->hasParam(PARAM_INPUT_2))
         {
             Power = request->getParam(PARAM_INPUT_2)->value();
-            Blynk.virtualWrite(V5, (Power=="ON"?1:0)); //set state
+            Blynk.virtualWrite(V5, (Power == "ON" ? 1 : 0)); //set state
         }
         else if (request->hasParam(PARAM_INPUT_3))
         {
@@ -156,15 +159,14 @@ void InitializeServer(){
             Blynk.virtualWrite(V0, 20); //Set slider Speed as 20%
 
             Blynk.virtualWrite(V5, 1); //set power on
-            if(Mode == "Color")
+            if (Mode == "Color")
                 Blynk.virtualWrite(V0, 1); //Set modo as color
-                else if (Mode == "Fade")
-                    Blynk.virtualWrite(V0, 2); //Set modo as color
-                    else if (Mode == "Strobe")
-                        Blynk.virtualWrite(V0, 3); //Set modo as color
-                        else
-                            Blynk.virtualWrite(V0, 1); //Set modo as color
-
+            else if (Mode == "Fade")
+                Blynk.virtualWrite(V0, 2); //Set modo as color
+            else if (Mode == "Strobe")
+                Blynk.virtualWrite(V0, 3); //Set modo as color
+            else
+                Blynk.virtualWrite(V0, 1); //Set modo as color
         }
         else if (request->hasParam(PARAM_INPUT_4))
         {
@@ -187,14 +189,15 @@ void InitializeServer(){
             if (request->getParam(PARAM_INPUT_5)->value() == "up")
             {
                 FadeDelay++;
-                if(FadeDelay > 100) FadeDelay = 100;
+                if (FadeDelay > 100)
+                    FadeDelay = 100;
                 StrobeDelay = FadeDelay;
-
             }
             else if (request->getParam(PARAM_INPUT_5)->value() == "down")
             {
                 FadeDelay--;
-                if(FadeDelay < 0) FadeDelay = 0;
+                if (FadeDelay < 0)
+                    FadeDelay = 0;
 
                 StrobeDelay = FadeDelay;
             }
@@ -213,4 +216,9 @@ void InitializeServer(){
 
     server.onNotFound(notFound);
     server.begin();
+}
+
+void notFound(AsyncWebServerRequest *request)
+{
+    request->send(404, "text/plain", "404 - Not found");
 }

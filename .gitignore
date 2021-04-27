@@ -30,3 +30,6 @@
 *.exe
 *.out
 *.app
+
+# Credentials / Token
+credentials.hpp

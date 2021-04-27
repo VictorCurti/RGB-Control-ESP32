@@ -1,36 +1,49 @@
-#include <Arduino.h>
-#include <BlynkSimpleEsp32.h>
-#include <AsyncTCP.h>
-#include <ESPAsyncWebServer.h>
-#include <map>
+//
+//
+//
+//
 
-#define LED 2
-AsyncWebServer server(80);
+#include <Arduino.h>           //Vscode library for arduino
+#include <BlynkSimpleEsp32.h>  //Blynk API integration
+#include <AsyncTCP.h>          //HTML page
+#include <ESPAsyncWebServer.h> //HTML
+#include <map>                 //Map library (Dictionary HEX color to RGB)
+
+AsyncWebServer server(80); //HTML web page port
 
 // Maping pins
-#define LED_RED 14
-#define LED_GREEN 12
-#define LED_BLUE 13
+#define LED 2        //Onboard led
+#define LED_RED 14   //Pin Red color
+#define LED_GREEN 12 //Pin green color
+#define LED_BLUE 13  //Pin blue color
 
-// PWM CONFIGURATION
-#define ChannelPwmRed 0
-#define ChannelPwmGreen 1
-#define ChannelPwmBlue 2
-#define FrequencyPwm 60 //Hz
+// PWM Configuration
+#define ChannelPwmRed 0   //PWM channel from red color
+#define ChannelPwmGreen 1 //PWM channel from green color
+#define ChannelPwmBlue 2  //PWM channel from blue color
+#define FrequencyPwm 60   //Frequency of PWM[Hz]
 
+//================================================================
+//                         Global variables
+//================================================================
+// Delay time
 int FadeDelay;
 int StrobeDelay;
 
-// Tag comunication
+// ------------------------
+int intensity = 128;
+int Fade_Red, Fade_Green, Fade_Blue, Fade_Step, Temp;
+long OldTime = -1;
+
+// Tag comunication (LocalIp/get?PARAM_INPUT=XXXX)
 const char *PARAM_INPUT_1 = "color";
 const char *PARAM_INPUT_2 = "power";
 const char *PARAM_INPUT_3 = "mode";
 const char *PARAM_INPUT_4 = "intensity";
 const char *PARAM_INPUT_5 = "speed";
 
+// States
 String Power = "OFF", Mode = "NULL", Color = "#000000";
-int intensity = 128;
-int Fade_Red, Fade_Green, Fade_Blue, Fade_Step, Temp;
 
 struct RGB_Color
 {
@@ -45,33 +58,57 @@ struct RGB_Color
 /**************************/
 std::map<char, int> HexTable;
 
-RGB_Color Cor;
+//================================================================
+//                         Functions
+//================================================================
 
 void Init_Map();
-void notFound(AsyncWebServerRequest *request);
 void Hex2RGB(String HEX_COLOR);
 void SerialDebug();
 void PWM_RGB();
+
+//================================================================
+//                         Local libraries
+//================================================================
 
 #include "HTML_Index.hpp"
 #include "PinsBlynk.hpp"
 #include "credentials.hpp"
 
+//credentials.hpp
+/*
+    // Token blynk
+    char auth[] = "string";
+
+    // Your WiFi credentials.
+    // Set password to "" for open networks.
+    char ssid[] = "Name";
+    char pass[] = "Password";
+*/
+
+//==============================================================================================
 void setup()
 {
 
+  // Create a dictionary HEX color to RGB color
   Init_Map();
 
+  // Configuration GPIO station
   pinMode(LED_RED, OUTPUT);
   pinMode(LED_GREEN, OUTPUT);
   pinMode(LED_BLUE, OUTPUT);
+  pinMode(LED, OUTPUT);
 
+  // Start pins
   digitalWrite(LED_RED, HIGH);
   digitalWrite(LED_GREEN, HIGH);
   digitalWrite(LED_BLUE, HIGH);
+  digitalWrite(LED, LOW);
 
+  // Conect ESP to Blynk API
   Blynk.begin(auth, ssid, pass);
 
+  //If can`t conect to wifi, reboot device
   if (WiFi.waitForConnectResult() != WL_CONNECTED)
   {
 #ifdef DEBUG
@@ -87,49 +124,41 @@ void setup()
   Serial.println("\n\n\n");
 #endif
 
+  //Create Async WebServer (File: HTML_Index.hpp)
   InitializeServer();
 
-  pinMode(LED, OUTPUT);
-  digitalWrite(LED, LOW);
-
+  //Wait connection to Blynk cloud
   while (!Blynk.connected())
-    ;
+  {
+  }
+
   digitalWrite(LED, HIGH);
   delay(500);
   digitalWrite(LED, LOW);
 
-  /***** PWM CONFIGURATION *******/
+  // PWM Initialize
   ledcSetup(ChannelPwmRed, FrequencyPwm, 8);
   ledcSetup(ChannelPwmGreen, FrequencyPwm, 8);
   ledcSetup(ChannelPwmBlue, FrequencyPwm, 8);
 
-  /***** PWM CHANEL *******/
+  // Channel PWM configuration
   ledcAttachPin(LED_RED, ChannelPwmRed);
   ledcAttachPin(LED_GREEN, ChannelPwmGreen);
   ledcAttachPin(LED_BLUE, ChannelPwmBlue);
 
-  // Inicializa o APP Blynk com os parametros já carregados no software
-  Blynk.virtualWrite(V5, 0); //Posiciona o botão POWER em OFF
+  // App Blynk initialize
+  Blynk.virtualWrite(V5, 0); //Set power button to on (App/State)
 }
 
 void loop()
 {
+
+#ifdef DEBUG
   SerialDebug();
+#endif
 
   PWM_RGB();
   Blynk.run();
-}
-
-void notFound(AsyncWebServerRequest *request)
-{
-  request->send(404, "text/plain", "404 - Not found");
-}
-
-void Hex2RGB(String HEX_COLOR)
-{
-  Cor_RGB.Red = (HexTable[HEX_COLOR[1]] * 16 + HexTable[HEX_COLOR[2]]);
-  Cor_RGB.Green = (HexTable[HEX_COLOR[3]] * 16 + HexTable[HEX_COLOR[4]]);
-  Cor_RGB.Blue = (HexTable[HEX_COLOR[5]] * 16 + HexTable[HEX_COLOR[6]]);
 }
 
 void Init_Map()
@@ -152,7 +181,13 @@ void Init_Map()
   HexTable['f'] = 15;
 }
 
-long OldTime = -1;
+void Hex2RGB(String HEX_COLOR)
+{
+  Cor_RGB.Red = (HexTable[HEX_COLOR[1]] * 16 + HexTable[HEX_COLOR[2]]);
+  Cor_RGB.Green = (HexTable[HEX_COLOR[3]] * 16 + HexTable[HEX_COLOR[4]]);
+  Cor_RGB.Blue = (HexTable[HEX_COLOR[5]] * 16 + HexTable[HEX_COLOR[6]]);
+}
+
 void SerialDebug()
 {
   if ((OldTime == -1) || ((millis() - OldTime) >= 1000))
