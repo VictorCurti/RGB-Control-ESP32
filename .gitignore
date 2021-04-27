@@ -35,4 +35,8 @@
 credentials.hpp
 
 # Vscode default
-.vscode
+*.vscode
+*.pio
+RGB_Control/include
+RGB_Control/test
+RGB_Control/lib/README
