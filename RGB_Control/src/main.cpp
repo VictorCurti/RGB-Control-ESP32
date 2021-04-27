@@ -1,7 +1,9 @@
+//================================================================
 //
+//  Author: Victor Curti        (April 2021)
+//  Board ESP32 - Devkit V1
 //
-//
-//
+//================================================================
 
 #include <Arduino.h>           //Vscode library for arduino
 #include <BlynkSimpleEsp32.h>  //Blynk API integration
@@ -147,7 +149,7 @@ void setup()
   ledcAttachPin(LED_BLUE, ChannelPwmBlue);
 
   // App Blynk initialize
-  Blynk.virtualWrite(V5, 0); //Set power button to on (App/State)
+  Blynk.virtualWrite(BlynkPower, 0); //Set power button to on (App/State)
 }
 
 void loop()
@@ -161,6 +163,7 @@ void loop()
   Blynk.run();
 }
 
+//Dictionary hexdecimal to decimal
 void Init_Map()
 {
   HexTable['0'] = 0;
@@ -225,25 +228,25 @@ void PWM_RGB()
 {
   if (Power == "ON" && Mode == "Color")
   {
-    ledcWrite(0, (256 - Cor_RGB.Red));
-    ledcWrite(1, (256 - Cor_RGB.Green));
-    ledcWrite(2, (256 - Cor_RGB.Blue));
+    ledcWrite(ChannelPwmRed, (256 - Cor_RGB.Red));
+    ledcWrite(ChannelPwmGreen, (256 - Cor_RGB.Green));
+    ledcWrite(ChannelPwmBlue, (256 - Cor_RGB.Blue));
 
-    Blynk.virtualWrite(V6, Cor_RGB.Red);
-    Blynk.virtualWrite(V7, Cor_RGB.Green);
-    Blynk.virtualWrite(V8, Cor_RGB.Blue);
+    Blynk.virtualWrite(BlynkRedLevel, Cor_RGB.Red);
+    Blynk.virtualWrite(BlynkGreenLevel, Cor_RGB.Green);
+    Blynk.virtualWrite(BlynkBlueLevel, Cor_RGB.Blue);
 
     delay(100);
   }
   else if (Power == "ON" && Mode == "Fade")
   {
-    ledcWrite(0, (256 - Fade_Red));
-    ledcWrite(1, (256 - Fade_Green));
-    ledcWrite(2, (256 - Fade_Blue));
+    ledcWrite(ChannelPwmRed, (256 - Fade_Red));
+    ledcWrite(ChannelPwmGreen, (256 - Fade_Green));
+    ledcWrite(ChannelPwmBlue, (256 - Fade_Blue));
 
-    Blynk.virtualWrite(V6, Fade_Red);
-    Blynk.virtualWrite(V7, Fade_Green);
-    Blynk.virtualWrite(V8, Fade_Blue);
+    Blynk.virtualWrite(BlynkRedLevel, Fade_Red);
+    Blynk.virtualWrite(BlynkGreenLevel, Fade_Green);
+    Blynk.virtualWrite(BlynkBlueLevel, Fade_Blue);
 
     if (Fade_Step == 0 && Fade_Red < 256)
       Fade_Red++;
@@ -276,81 +279,81 @@ void PWM_RGB()
   else if (Power == "ON" && Mode == "Strobe")
   {
 
-    ledcWrite(0, 256);
-    ledcWrite(1, 256);
-    ledcWrite(2, 256);
+    ledcWrite(ChannelPwmRed, 256);
+    ledcWrite(ChannelPwmGreen, 256);
+    ledcWrite(ChannelPwmBlue, 256);
 
     switch (random(0, 7))
     {
     case 0:
       Temp = random(30, intensity);
-      ledcWrite(0, (256 - Temp));
-      Blynk.virtualWrite(V6, Temp);
+      ledcWrite(ChannelPwmRed, (256 - Temp));
+      Blynk.virtualWrite(BlynkRedLevel, Temp);
       break;
     case 1:
       Temp = random(30, intensity);
-      ledcWrite(1, (256 - Temp));
-      Blynk.virtualWrite(V7, Temp);
+      ledcWrite(ChannelPwmGreen, (256 - Temp));
+      Blynk.virtualWrite(BlynkGreenLevel, Temp);
       break;
     case 2:
       Temp = random(30, intensity);
-      ledcWrite(2, (256 - Temp));
-      Blynk.virtualWrite(V8, Temp);
+      ledcWrite(ChannelPwmBlue, (256 - Temp));
+      Blynk.virtualWrite(BlynkBlueLevel, Temp);
       break;
     case 3:
       Temp = random(30, intensity);
-      ledcWrite(0, (256 - Temp));
-      Blynk.virtualWrite(V6, Temp);
+      ledcWrite(ChannelPwmRed, (256 - Temp));
+      Blynk.virtualWrite(BlynkRedLevel, Temp);
       Temp = random(30, intensity);
-      ledcWrite(1, (256 - Temp));
-      Blynk.virtualWrite(V7, Temp);
+      ledcWrite(ChannelPwmGreen, (256 - Temp));
+      Blynk.virtualWrite(BlynkGreenLevel, Temp);
       break;
     case 4:
       Temp = random(30, intensity);
-      ledcWrite(0, (256 - Temp));
-      Blynk.virtualWrite(V6, Temp);
+      ledcWrite(ChannelPwmRed, (256 - Temp));
+      Blynk.virtualWrite(BlynkRedLevel, Temp);
       Temp = random(30, intensity);
-      ledcWrite(2, (256 - Temp));
-      Blynk.virtualWrite(V8, Temp);
+      ledcWrite(ChannelPwmBlue, (256 - Temp));
+      Blynk.virtualWrite(BlynkBlueLevel, Temp);
       break;
     case 5:
       Temp = random(30, intensity);
-      ledcWrite(1, (256 - Temp));
-      Blynk.virtualWrite(V7, Temp);
+      ledcWrite(ChannelPwmGreen, (256 - Temp));
+      Blynk.virtualWrite(BlynkGreenLevel, Temp);
       Temp = random(30, intensity);
-      ledcWrite(2, (256 - Temp));
-      Blynk.virtualWrite(V8, Temp);
+      ledcWrite(ChannelPwmBlue, (256 - Temp));
+      Blynk.virtualWrite(BlynkBlueLevel, Temp);
       break;
     case 6:
       Temp = random(30, intensity);
-      ledcWrite(0, (256 - Temp));
-      Blynk.virtualWrite(V6, Temp);
+      ledcWrite(ChannelPwmRed, (256 - Temp));
+      Blynk.virtualWrite(BlynkRedLevel, Temp);
       Temp = random(30, intensity);
-      ledcWrite(1, (256 - Temp));
-      Blynk.virtualWrite(V7, Temp);
+      ledcWrite(ChannelPwmGreen, (256 - Temp));
+      Blynk.virtualWrite(BlynkGreenLevel, Temp);
       Temp = random(30, intensity);
-      ledcWrite(2, (256 - Temp));
-      Blynk.virtualWrite(V8, Temp);
+      ledcWrite(ChannelPwmBlue, (256 - Temp));
+      Blynk.virtualWrite(BlynkBlueLevel, Temp);
       break;
     default:
-      ledcWrite(0, 256);
-      ledcWrite(1, 256);
-      ledcWrite(2, 256);
-      Blynk.virtualWrite(V6, 0);
-      Blynk.virtualWrite(V6, 0);
-      Blynk.virtualWrite(V6, 0);
+      ledcWrite(ChannelPwmRed, 256);
+      ledcWrite(ChannelPwmGreen, 256);
+      ledcWrite(ChannelPwmBlue, 256);
+      Blynk.virtualWrite(BlynkRedLevel, 0);
+      Blynk.virtualWrite(BlynkGreenLevel, 0);
+      Blynk.virtualWrite(BlynkBlueLevel, 0);
     }
 
     delay(StrobeDelay * 10);
   }
   else if (Power == "OFF")
   {
-    ledcWrite(0, 256);
-    ledcWrite(1, 256);
-    ledcWrite(2, 256);
+    ledcWrite(ChannelPwmRed, 256);
+    ledcWrite(ChannelPwmGreen, 256);
+    ledcWrite(ChannelPwmBlue, 256);
 
-    Blynk.virtualWrite(V6, 0);
-    Blynk.virtualWrite(V7, 0);
-    Blynk.virtualWrite(V8, 0);
+    Blynk.virtualWrite(BlynkRedLevel, 0);
+    Blynk.virtualWrite(BlynkGreenLevel, 0);
+    Blynk.virtualWrite(BlynkBlueLevel, 0);
   }
 }

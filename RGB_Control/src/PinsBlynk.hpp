@@ -2,6 +2,16 @@
 /*                                               */
 /*-----------------------------------------------*/
 
+#define BlynkSwitchList V0
+#define BlynkSpeedSlider V1
+#define BlynkIntensitySlider V2
+#define BlynkColorPiker V3
+#define BlynkPower V5
+
+#define BlynkRedLevel V6
+#define BlynkGreenLevel V7
+#define BlynkBlueLevel V8
+
 /*-----------------------------------------------*/
 /*  Virtual Pins Map                             */
 /*                                               */
@@ -15,7 +25,7 @@
     2 - Fade
     3 - Strobe
 */
-BLYNK_WRITE(V0)
+BLYNK_WRITE(BlynkSwitchList)
 {
     int pinValue = param.asInt();
     switch (pinValue)
@@ -23,22 +33,22 @@ BLYNK_WRITE(V0)
     case 1:
         Mode = "Color";
         Power = "ON";
-        Blynk.virtualWrite(V5, 1); //set power on
+        Blynk.virtualWrite(BlynkPower, 1); //set power on
         break;
     case 2:
         Mode = "Fade";
         Power = "ON";
-        Blynk.virtualWrite(V5, 1); //set power on
+        Blynk.virtualWrite(BlynkPower, 1); //set power on
         break;
     case 3:
         Mode = "Strobe";
         Power = "ON";
-        Blynk.virtualWrite(V5, 1); //set power on
+        Blynk.virtualWrite(BlynkPower, 1); //set power on
         break;
 
     default:
         Power = "OFF";
-        Blynk.virtualWrite(V5, 0); //set power on
+        Blynk.virtualWrite(BlynkPower, 0); //set power on
         break;
     }
     Fade_Red = 0;
@@ -51,7 +61,7 @@ BLYNK_WRITE(V0)
     StrobeDelay = 200;
 
 #ifdef DEBUG
-    Serial.print("MODE [V0]: ");
+    Serial.print("MODE [BlynkSwitchList]: ");
     Serial.println(pinValue);
 #endif
 }
@@ -60,7 +70,7 @@ BLYNK_WRITE(V0)
     Return int (#)
     0 -> 180
 */
-BLYNK_WRITE(V1)
+BLYNK_WRITE(BlynkSpeedSlider)
 {
     int pinValue = param.asInt();
 
@@ -68,7 +78,7 @@ BLYNK_WRITE(V1)
     StrobeDelay = pinValue;
 
 #ifdef DEBUG
-    Serial.print("Speed [V1]: ");
+    Serial.print("Speed [BlynkSpeedSlider]: ");
     Serial.println(pinValue);
 #endif
 }
@@ -77,13 +87,13 @@ BLYNK_WRITE(V1)
     Return int (#)
     0 -> 255
 */
-BLYNK_WRITE(V2)
+BLYNK_WRITE(BlynkIntensitySlider)
 {
     int pinValue = param.asInt();
     intensity = pinValue;
 
 #ifdef DEBUG
-    Serial.print("Intensity [V2]: ");
+    Serial.print("Intensity [BlynkIntensitySlider]: ");
     Serial.println(pinValue);
 #endif
 }
@@ -94,14 +104,14 @@ BLYNK_WRITE(V2)
     G: 0 -> 256
     B: 0 -> 256
 */
-BLYNK_WRITE(V3)
+BLYNK_WRITE(BlynkColorPiker)
 {
     Cor_RGB.Red = param[0].asInt();
     Cor_RGB.Green = param[1].asInt();
     Cor_RGB.Blue = param[2].asInt();
 
 #ifdef DEBUG
-    Serial.println("Zebra [V3]: ");
+    Serial.println("Zebra [BlynkColorPiker]: ");
     Serial.print("\tRed [0->256] :\t");
     Serial.println(Cor_RGB.Red);
     Serial.print("\tGreen [0->256] :\t");
@@ -115,14 +125,14 @@ BLYNK_WRITE(V3)
     1 - ON
     0 - OFF
 */
-BLYNK_WRITE(V5)
+BLYNK_WRITE(BlynkPower)
 {
     bool pinValue = param.asInt();
     digitalWrite(LED, pinValue);
     Power = pinValue ? "ON" : "OFF";
 
 #ifdef DEBUG
-    Serial.print("POWER [V5]: ");
+    Serial.print("POWER [BlynkPower]: ");
     Serial.println(pinValue);
 #endif
 }
