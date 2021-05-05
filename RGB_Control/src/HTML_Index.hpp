@@ -113,8 +113,7 @@ const char index_html[] PROGMEM = R"rawliteral(
 <footer style="padding-top: 100px;">
     <h6>
         <p>By: Victor Curti</p>
-        <p>www.github.com/################################</p>
-        <p>Linkedin : linkedin.com </p>
+        <p>https://github.com/VictorCurti/RGB-Control-ESP32</p>
     </h6>
 </footer>
 </html>
