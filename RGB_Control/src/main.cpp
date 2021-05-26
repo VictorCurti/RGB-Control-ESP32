@@ -6,12 +6,15 @@
 //================================================================
 
 #include <Arduino.h>           //Vscode library for arduino
+#include <AsyncElegantOTA.h>   //OTA
 #include <BlynkSimpleEsp32.h>  //Blynk API integration
 #include <AsyncTCP.h>          //HTML page
 #include <ESPAsyncWebServer.h> //HTML
 #include <map>                 //Map library (Dictionary HEX color to RGB)
+#include <ESPmDNS.h>           //DNS (NAME.local)
+#include <Espalexa.h>
 
-AsyncWebServer server(80); //HTML web page port
+AsyncWebServer server1(8080); //HTML web page port
 
 // Maping pins
 #define LED 2        //Onboard led
@@ -57,6 +60,9 @@ struct RGB_Color
   //int PwmBlue = map(Blue, 0, 255, 0, 1023);   //Conversion RGB (8 bits) to PWM (10 bits)
 } Cor_RGB;
 
+//Alexa Esp
+Espalexa espalexa;
+
 /**************************/
 std::map<char, int> HexTable;
 
@@ -69,6 +75,8 @@ void Hex2RGB(String HEX_COLOR);
 void SerialDebug();
 void PWM_RGB();
 
+// Esp Alexa
+void colorLightChanged(uint8_t brightness, uint32_t rgb);
 //================================================================
 //                         Local libraries
 //================================================================
@@ -109,6 +117,19 @@ void setup()
 
   // Conect ESP to Blynk API
   Blynk.begin(auth, ssid, pass);
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(ssid, pass);
+  WiFi.setHostname("rgb-control"); //Name on router
+
+  // Change ip address to name rgbcontrol
+  // ping rgbcontrol.local
+  if (!MDNS.begin("rgbcontrol"))
+  {
+#ifdef DEBUG
+    Serial.println("Error starting mDNS");
+#endif
+    return;
+  }
 
   //If can`t conect to wifi, reboot device
   if (WiFi.waitForConnectResult() != WL_CONNECTED)
@@ -120,11 +141,22 @@ void setup()
   }
 
 #ifdef DEBUG
+  Serial.println("OTA HTTP server on");
+#endif
+
+#ifdef DEBUG
   Serial.begin(9600);
   Serial.print("IP Address: ");
   Serial.println(WiFi.localIP());
   Serial.println("\n\n\n");
 #endif
+
+  //AsyncElegantOTA.begin(&server); // Start ElegantOTA without password
+  AsyncElegantOTA.begin(&server1, "admin", "agoravai");
+
+  //Esp Alexa
+  espalexa.addDevice("Fita", colorLightChanged); //simplest definition, default state off
+  espalexa.begin();
 
   //Create Async WebServer (File: HTML_Index.hpp)
   InitializeServer();
@@ -158,9 +190,11 @@ void loop()
 #ifdef DEBUG
   SerialDebug();
 #endif
-
+  AsyncElegantOTA.loop();
+  espalexa.loop();
   PWM_RGB();
   Blynk.run();
+  delay(1);
 }
 
 //Dictionary hexdecimal to decimal
@@ -356,4 +390,55 @@ void PWM_RGB()
     Blynk.virtualWrite(BlynkGreenLevel, 0);
     Blynk.virtualWrite(BlynkBlueLevel, 0);
   }
+}
+/*Esp with Alexa
+*/
+void colorLightChanged(uint8_t brightness, uint32_t rgb)
+{
+  //do what you need to do here, for example control RGB LED strip
+
+  if (brightness == 0)
+  {
+    Blynk.virtualWrite(V5, 0); //set power on
+    Power = "OFF";
+  }
+  else
+  {
+    Mode = "Color";
+    Power = "ON";
+    Blynk.virtualWrite(V5, 1); //set power on
+    Blynk.virtualWrite(V0, 1); //Set modo as color
+  }
+
+  // Get Color from Alexa
+  Cor_RGB.Red = ((rgb >> 16) & 0xFF);
+  Cor_RGB.Green = ((rgb >> 8) & 0xFF);
+  Cor_RGB.Blue = (rgb & 0xFF);
+
+  uint8_t brilho = brightness;
+  Serial.println("\n\n-Brilho:");
+  Serial.println(brilho);
+  brilho = map(brilho,
+               1, 255,
+               0, 100);
+  Serial.println(brilho);
+
+  // Applay
+
+  Cor_RGB.Red = (int)(Cor_RGB.Red * (brilho / 100.0));
+  Cor_RGB.Green = (int)(Cor_RGB.Green * (brilho / 100.0));
+  Cor_RGB.Blue = (int)(Cor_RGB.Blue * (brilho / 100.0));
+
+#ifdef DEBUG
+  Serial.print("Brightness: ");
+  Serial.print(brightness);
+  Serial.println("RGB[EspAlexa]: ");
+
+  Serial.print(", Red: ");
+  Serial.print((rgb >> 16) & 0xFF); //get red component
+  Serial.print(", Green: ");
+  Serial.print((rgb >> 8) & 0xFF); //get green
+  Serial.print(", Blue: ");
+  Serial.println(rgb & 0xFF); //get blue
+#endif
 }

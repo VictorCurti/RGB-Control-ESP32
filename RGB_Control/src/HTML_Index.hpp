@@ -123,11 +123,11 @@ const char index_html[] PROGMEM = R"rawliteral(
 void InitializeServer()
 {
     // Send web page with input fields to client
-    server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
+    server1.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
         request->send_P(200, "text/html", index_html);
     });
 
-    server.on("/get", HTTP_GET, [](AsyncWebServerRequest *request) {
+    server1.on("/get", HTTP_GET, [](AsyncWebServerRequest *request) {
         if (request->hasParam(PARAM_INPUT_1))
         {
             (request->getParam(PARAM_INPUT_1)->value()) == "" ? Color = "000000" : Color = request->getParam(PARAM_INPUT_1)->value();
@@ -206,15 +206,15 @@ void InitializeServer()
         request->redirect("/"); // (/?color=FFFFFF)
     });
 
-    server.on("/reset", HTTP_GET, [](AsyncWebServerRequest *request) {
+    server1.on("/reset", HTTP_GET, [](AsyncWebServerRequest *request) {
         request->send_P(200, "text/html", "ESP rebooting now");
         delay(500);
         request->redirect("/");
         ESP.restart();
     });
 
-    server.onNotFound(notFound);
-    server.begin();
+    server1.onNotFound(notFound);
+    server1.begin();
 }
 
 void notFound(AsyncWebServerRequest *request)
