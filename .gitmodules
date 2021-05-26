@@ -1,0 +1,3 @@
+[submodule "RGB_Control/src/Credentials"]
+	path = RGB_Control/src/Credentials
+	url = git@github.com:VictorCurti/Credentials.git
