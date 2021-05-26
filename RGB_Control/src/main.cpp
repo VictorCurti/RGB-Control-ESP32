@@ -1,7 +1,8 @@
 //================================================================
 //
-//  Author: Victor Curti        (April 2021)
+//  Author: Victor Curti        (May 2021)
 //  Board ESP32 - Devkit V1
+//  RGB Control with Alexa + OTA
 //
 //================================================================
 
