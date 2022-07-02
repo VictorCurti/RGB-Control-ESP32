@@ -6,6 +6,8 @@
 //
 //================================================================
 
+#define ESPALEXA_ASYNC         // Fix Webserver Espalexa v2.3.0
+
 #include <Arduino.h>           //Vscode library for arduino
 #include <AsyncElegantOTA.h>   //OTA
 #include <BlynkSimpleEsp32.h>  //Blynk API integration
@@ -84,7 +86,7 @@ void colorLightChanged(uint8_t brightness, uint32_t rgb);
 
 #include "HTML_Index.hpp"
 #include "PinsBlynk.hpp"
-#include "credentials.hpp"
+#include "Credentials/credentials.hpp"
 
 //credentials.hpp
 /*
@@ -191,7 +193,6 @@ void loop()
 #ifdef DEBUG
   SerialDebug();
 #endif
-  AsyncElegantOTA.loop();
   espalexa.loop();
   PWM_RGB();
   Blynk.run();
