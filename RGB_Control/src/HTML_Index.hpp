@@ -133,14 +133,11 @@ void InitializeServer()
             (request->getParam(PARAM_INPUT_1)->value()) == "" ? Color = "000000" : Color = request->getParam(PARAM_INPUT_1)->value();
             Mode = "Color";
             Power = "ON";
-            Blynk.virtualWrite(V5, 1); //set power on
-            Blynk.virtualWrite(V0, 1); //Set modo as color
             Hex2RGB(Color);
         }
         else if (request->hasParam(PARAM_INPUT_2))
         {
             Power = request->getParam(PARAM_INPUT_2)->value();
-            Blynk.virtualWrite(V5, (Power == "ON" ? 1 : 0)); //set state
         }
         else if (request->hasParam(PARAM_INPUT_3))
         {
@@ -155,17 +152,6 @@ void InitializeServer()
             FadeDelay = 20;
             StrobeDelay = 20;
 
-            Blynk.virtualWrite(V0, 20); //Set slider Speed as 20%
-
-            Blynk.virtualWrite(V5, 1); //set power on
-            if (Mode == "Color")
-                Blynk.virtualWrite(V0, 1); //Set modo as color
-            else if (Mode == "Fade")
-                Blynk.virtualWrite(V0, 2); //Set modo as color
-            else if (Mode == "Strobe")
-                Blynk.virtualWrite(V0, 3); //Set modo as color
-            else
-                Blynk.virtualWrite(V0, 1); //Set modo as color
         }
         else if (request->hasParam(PARAM_INPUT_4))
         {
@@ -181,7 +167,6 @@ void InitializeServer()
                 if (intensity < 0)
                     intensity = 0;
             }
-            Blynk.virtualWrite(V2, intensity); //Set slider Speed as %
         }
         else if (request->hasParam(PARAM_INPUT_5))
         {
@@ -200,7 +185,6 @@ void InitializeServer()
 
                 StrobeDelay = FadeDelay;
             }
-            Blynk.virtualWrite(V1, FadeDelay); //Set slider Speed as %
         }
 
         request->redirect("/"); // (/?color=FFFFFF)

@@ -6,30 +6,29 @@
 //
 //================================================================
 
-#define ESPALEXA_ASYNC         // Fix Webserver Espalexa v2.3.0
+#define ESPALEXA_ASYNC // Fix Webserver Espalexa v2.3.0
 
 #include <Arduino.h>           //Vscode library for arduino
 #include <AsyncElegantOTA.h>   //OTA
-#include <BlynkSimpleEsp32.h>  //Blynk API integration
 #include <AsyncTCP.h>          //HTML page
 #include <ESPAsyncWebServer.h> //HTML
 #include <map>                 //Map library (Dictionary HEX color to RGB)
 #include <ESPmDNS.h>           //DNS (NAME.local)
 #include <Espalexa.h>
 
-AsyncWebServer server1(8080); //HTML web page port
+AsyncWebServer server1(8080); // HTML web page port
 
 // Maping pins
-#define LED 2        //Onboard led
-#define LED_RED 14   //Pin Red color
-#define LED_GREEN 12 //Pin green color
-#define LED_BLUE 13  //Pin blue color
+#define LED 2        // Onboard led
+#define LED_RED 14   // Pin Red color
+#define LED_GREEN 12 // Pin green color
+#define LED_BLUE 13  // Pin blue color
 
 // PWM Configuration
-#define ChannelPwmRed 0   //PWM channel from red color
-#define ChannelPwmGreen 1 //PWM channel from green color
-#define ChannelPwmBlue 2  //PWM channel from blue color
-#define FrequencyPwm 60   //Frequency of PWM[Hz]
+#define ChannelPwmRed 0   // PWM channel from red color
+#define ChannelPwmGreen 1 // PWM channel from green color
+#define ChannelPwmBlue 2  // PWM channel from blue color
+#define FrequencyPwm 60   // Frequency of PWM[Hz]
 
 //================================================================
 //                         Global variables
@@ -55,15 +54,15 @@ String Power = "OFF", Mode = "NULL", Color = "#000000";
 
 struct RGB_Color
 {
-  int Red = 0; //RGB code color
-  //int PwmRed = map(Red, 0, 255, 0, 1023);     //Conversion RGB (8 bits) to PWM (10 bits)
-  int Green = 0; //RGB code color
-  //int PwmGreen = map(Green, 0, 255, 0, 1023); //Conversion RGB (8 bits) to PWM (10 bits)
-  int Blue = 0; //RGB code color
-  //int PwmBlue = map(Blue, 0, 255, 0, 1023);   //Conversion RGB (8 bits) to PWM (10 bits)
+  int Red = 0; // RGB code color
+  // int PwmRed = map(Red, 0, 255, 0, 1023);     //Conversion RGB (8 bits) to PWM (10 bits)
+  int Green = 0; // RGB code color
+  // int PwmGreen = map(Green, 0, 255, 0, 1023); //Conversion RGB (8 bits) to PWM (10 bits)
+  int Blue = 0; // RGB code color
+  // int PwmBlue = map(Blue, 0, 255, 0, 1023);   //Conversion RGB (8 bits) to PWM (10 bits)
 } Cor_RGB;
 
-//Alexa Esp
+// Alexa Esp
 Espalexa espalexa;
 
 /**************************/
@@ -74,9 +73,10 @@ std::map<char, int> HexTable;
 //================================================================
 
 void Init_Map();
-void Hex2RGB(String HEX_COLOR);
+void Hex2RGB(String);
 void SerialDebug();
 void PWM_RGB();
+void WifiConect(bool);
 
 // Esp Alexa
 void colorLightChanged(uint8_t brightness, uint32_t rgb);
@@ -85,14 +85,10 @@ void colorLightChanged(uint8_t brightness, uint32_t rgb);
 //================================================================
 
 #include "HTML_Index.hpp"
-#include "PinsBlynk.hpp"
 #include "Credentials/credentials.hpp"
 
-//credentials.hpp
+// credentials.hpp
 /*
-    // Token blynk
-    char auth[] = "string";
-
     // Your WiFi credentials.
     // Set password to "" for open networks.
     char ssid[] = "Name";
@@ -118,11 +114,23 @@ void setup()
   digitalWrite(LED_BLUE, HIGH);
   digitalWrite(LED, LOW);
 
-  // Conect ESP to Blynk API
-  Blynk.begin(auth, ssid, pass);
-  WiFi.mode(WIFI_STA);
-  WiFi.begin(ssid, pass);
-  WiFi.setHostname("rgb-control"); //Name on router
+  // PWM Initialize
+  ledcSetup(ChannelPwmRed, FrequencyPwm, 8);
+  ledcSetup(ChannelPwmGreen, FrequencyPwm, 8);
+  ledcSetup(ChannelPwmBlue, FrequencyPwm, 8);
+
+  ledcWrite(ChannelPwmRed, 256);
+  ledcWrite(ChannelPwmGreen, 256);
+  ledcWrite(ChannelPwmBlue, 256);
+
+  // Channel PWM configuration
+  ledcAttachPin(LED_RED, ChannelPwmRed);
+  ledcAttachPin(LED_GREEN, ChannelPwmGreen);
+  ledcAttachPin(LED_BLUE, ChannelPwmBlue);
+
+  // Conect ESP to Wifi
+  Serial.begin(9600);
+  WifiConect(true);
 
   // Change ip address to name rgbcontrol
   // ping rgbcontrol.local
@@ -134,7 +142,7 @@ void setup()
     return;
   }
 
-  //If can`t conect to wifi, reboot device
+  // If can`t conect to wifi, reboot device
   if (WiFi.waitForConnectResult() != WL_CONNECTED)
   {
 #ifdef DEBUG
@@ -148,43 +156,24 @@ void setup()
 #endif
 
 #ifdef DEBUG
-  Serial.begin(9600);
   Serial.print("IP Address: ");
   Serial.println(WiFi.localIP());
   Serial.println("\n\n\n");
 #endif
 
-  //AsyncElegantOTA.begin(&server); // Start ElegantOTA without password
+  // AsyncElegantOTA.begin(&server); // Start ElegantOTA without password
   AsyncElegantOTA.begin(&server1, "admin", "agoravai");
 
-  //Esp Alexa
-  espalexa.addDevice("Fita", colorLightChanged); //simplest definition, default state off
+  // Esp Alexa
+  espalexa.addDevice("Fita", colorLightChanged); // simplest definition, default state off
   espalexa.begin();
 
-  //Create Async WebServer (File: HTML_Index.hpp)
+  // Create Async WebServer (File: HTML_Index.hpp)
   InitializeServer();
-
-  //Wait connection to Blynk cloud
-  while (!Blynk.connected())
-  {
-  }
 
   digitalWrite(LED, HIGH);
   delay(500);
   digitalWrite(LED, LOW);
-
-  // PWM Initialize
-  ledcSetup(ChannelPwmRed, FrequencyPwm, 8);
-  ledcSetup(ChannelPwmGreen, FrequencyPwm, 8);
-  ledcSetup(ChannelPwmBlue, FrequencyPwm, 8);
-
-  // Channel PWM configuration
-  ledcAttachPin(LED_RED, ChannelPwmRed);
-  ledcAttachPin(LED_GREEN, ChannelPwmGreen);
-  ledcAttachPin(LED_BLUE, ChannelPwmBlue);
-
-  // App Blynk initialize
-  Blynk.virtualWrite(BlynkPower, 0); //Set power button to on (App/State)
 }
 
 void loop()
@@ -193,13 +182,63 @@ void loop()
 #ifdef DEBUG
   SerialDebug();
 #endif
+  if (WiFi.status() != WL_CONNECTED)
+  {
+    WifiConect(false);
+  }
   espalexa.loop();
   PWM_RGB();
-  Blynk.run();
   delay(1);
 }
 
-//Dictionary hexdecimal to decimal
+void WifiConect(bool stage)
+{
+  bool aux = false;
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(ssid, pass);
+
+  if (stage)
+  {
+    ledcWrite(ChannelPwmGreen, (128));
+  }
+
+#ifdef DEBUG
+  Serial.println("Connecting to WiFi..");
+#endif
+
+  while (WiFi.status() != WL_CONNECTED)
+  {
+    delay(250);
+
+    if (stage)
+    {
+      if (aux)
+      {
+        ledcWrite(ChannelPwmGreen, 256);
+        aux = false;
+      }
+      else
+      {
+        ledcWrite(ChannelPwmGreen, 128);
+        aux = true;
+      }
+    }
+
+#ifdef DEBUG
+    Serial.print(".");
+#endif
+  }
+
+#ifdef DEBUG
+  Serial.println("Connected to the WiFi network");
+#endif
+
+  PWM_RGB();
+
+  WiFi.setHostname("rgb-control"); // Name on router
+}
+
+// Dictionary hexdecimal to decimal
 void Init_Map()
 {
   HexTable['0'] = 0;
@@ -268,10 +307,6 @@ void PWM_RGB()
     ledcWrite(ChannelPwmGreen, (256 - Cor_RGB.Green));
     ledcWrite(ChannelPwmBlue, (256 - Cor_RGB.Blue));
 
-    Blynk.virtualWrite(BlynkRedLevel, Cor_RGB.Red);
-    Blynk.virtualWrite(BlynkGreenLevel, Cor_RGB.Green);
-    Blynk.virtualWrite(BlynkBlueLevel, Cor_RGB.Blue);
-
     delay(100);
   }
   else if (Power == "ON" && Mode == "Fade")
@@ -279,10 +314,6 @@ void PWM_RGB()
     ledcWrite(ChannelPwmRed, (256 - Fade_Red));
     ledcWrite(ChannelPwmGreen, (256 - Fade_Green));
     ledcWrite(ChannelPwmBlue, (256 - Fade_Blue));
-
-    Blynk.virtualWrite(BlynkRedLevel, Fade_Red);
-    Blynk.virtualWrite(BlynkGreenLevel, Fade_Green);
-    Blynk.virtualWrite(BlynkBlueLevel, Fade_Blue);
 
     if (Fade_Step == 0 && Fade_Red < 256)
       Fade_Red++;
@@ -324,60 +355,45 @@ void PWM_RGB()
     case 0:
       Temp = random(30, intensity);
       ledcWrite(ChannelPwmRed, (256 - Temp));
-      Blynk.virtualWrite(BlynkRedLevel, Temp);
       break;
     case 1:
       Temp = random(30, intensity);
       ledcWrite(ChannelPwmGreen, (256 - Temp));
-      Blynk.virtualWrite(BlynkGreenLevel, Temp);
       break;
     case 2:
       Temp = random(30, intensity);
       ledcWrite(ChannelPwmBlue, (256 - Temp));
-      Blynk.virtualWrite(BlynkBlueLevel, Temp);
       break;
     case 3:
       Temp = random(30, intensity);
       ledcWrite(ChannelPwmRed, (256 - Temp));
-      Blynk.virtualWrite(BlynkRedLevel, Temp);
       Temp = random(30, intensity);
       ledcWrite(ChannelPwmGreen, (256 - Temp));
-      Blynk.virtualWrite(BlynkGreenLevel, Temp);
       break;
     case 4:
       Temp = random(30, intensity);
       ledcWrite(ChannelPwmRed, (256 - Temp));
-      Blynk.virtualWrite(BlynkRedLevel, Temp);
       Temp = random(30, intensity);
       ledcWrite(ChannelPwmBlue, (256 - Temp));
-      Blynk.virtualWrite(BlynkBlueLevel, Temp);
       break;
     case 5:
       Temp = random(30, intensity);
       ledcWrite(ChannelPwmGreen, (256 - Temp));
-      Blynk.virtualWrite(BlynkGreenLevel, Temp);
       Temp = random(30, intensity);
       ledcWrite(ChannelPwmBlue, (256 - Temp));
-      Blynk.virtualWrite(BlynkBlueLevel, Temp);
       break;
     case 6:
       Temp = random(30, intensity);
       ledcWrite(ChannelPwmRed, (256 - Temp));
-      Blynk.virtualWrite(BlynkRedLevel, Temp);
       Temp = random(30, intensity);
       ledcWrite(ChannelPwmGreen, (256 - Temp));
-      Blynk.virtualWrite(BlynkGreenLevel, Temp);
       Temp = random(30, intensity);
       ledcWrite(ChannelPwmBlue, (256 - Temp));
-      Blynk.virtualWrite(BlynkBlueLevel, Temp);
       break;
     default:
       ledcWrite(ChannelPwmRed, 256);
       ledcWrite(ChannelPwmGreen, 256);
       ledcWrite(ChannelPwmBlue, 256);
-      Blynk.virtualWrite(BlynkRedLevel, 0);
-      Blynk.virtualWrite(BlynkGreenLevel, 0);
-      Blynk.virtualWrite(BlynkBlueLevel, 0);
     }
 
     delay(StrobeDelay * 10);
@@ -387,29 +403,22 @@ void PWM_RGB()
     ledcWrite(ChannelPwmRed, 256);
     ledcWrite(ChannelPwmGreen, 256);
     ledcWrite(ChannelPwmBlue, 256);
-
-    Blynk.virtualWrite(BlynkRedLevel, 0);
-    Blynk.virtualWrite(BlynkGreenLevel, 0);
-    Blynk.virtualWrite(BlynkBlueLevel, 0);
   }
 }
 /*Esp with Alexa
-*/
+ */
 void colorLightChanged(uint8_t brightness, uint32_t rgb)
 {
-  //do what you need to do here, for example control RGB LED strip
+  // do what you need to do here, for example control RGB LED strip
 
   if (brightness == 0)
   {
-    Blynk.virtualWrite(V5, 0); //set power on
     Power = "OFF";
   }
   else
   {
     Mode = "Color";
     Power = "ON";
-    Blynk.virtualWrite(V5, 1); //set power on
-    Blynk.virtualWrite(V0, 1); //Set modo as color
   }
 
   // Get Color from Alexa
@@ -418,13 +427,16 @@ void colorLightChanged(uint8_t brightness, uint32_t rgb)
   Cor_RGB.Blue = (rgb & 0xFF);
 
   uint8_t brilho = brightness;
+#ifdef DEBUG
   Serial.println("\n\n-Brilho:");
   Serial.println(brilho);
+#endif
   brilho = map(brilho,
                1, 255,
                0, 100);
+#ifdef DEBUG
   Serial.println(brilho);
-
+#endif
   // Applay
 
   Cor_RGB.Red = (int)(Cor_RGB.Red * (brilho / 100.0));
@@ -437,10 +449,10 @@ void colorLightChanged(uint8_t brightness, uint32_t rgb)
   Serial.println("RGB[EspAlexa]: ");
 
   Serial.print(", Red: ");
-  Serial.print((rgb >> 16) & 0xFF); //get red component
+  Serial.print((rgb >> 16) & 0xFF); // get red component
   Serial.print(", Green: ");
-  Serial.print((rgb >> 8) & 0xFF); //get green
+  Serial.print((rgb >> 8) & 0xFF); // get green
   Serial.print(", Blue: ");
-  Serial.println(rgb & 0xFF); //get blue
+  Serial.println(rgb & 0xFF); // get blue
 #endif
 }
