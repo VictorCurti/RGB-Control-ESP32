@@ -184,16 +184,22 @@ void loop()
 #endif
   if (WiFi.status() != WL_CONNECTED)
   {
-    WifiConect(false);
+    digitalWrite(LED, HIGH);
+    // WifiConect(false);
+    WiFi.disconnect();
+    delay(500);
+    WiFi.reconnect();
   }
   espalexa.loop();
   PWM_RGB();
   delay(1);
+  digitalWrite(LED, LOW);
 }
 
 void WifiConect(bool stage)
 {
   bool aux = false;
+  WiFi.disconnect();
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, pass);
 
