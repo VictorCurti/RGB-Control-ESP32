@@ -134,7 +134,7 @@ void setup()
 
   // Change ip address to name rgbcontrol
   // ping rgbcontrol.local
-  if (!MDNS.begin("rgbcontrol"))
+  if (!MDNS.begin("rgb_control"))
   {
 #ifdef DEBUG
     Serial.println("Error starting mDNS");
